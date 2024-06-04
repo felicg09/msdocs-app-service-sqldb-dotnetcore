@@ -1,71 +1,65 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy ASP.Net Core app to Azure Web App - testcfwebapp
-
-on:
+'on':
   push:
     branches:
       - main
-  workflow_dispatch:
-
+  workflow_dispatch: null
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.x'
+          dotnet-version: 8.x
           include-prerelease: true
-
       - name: Build with dotnet
         run: dotnet build --configuration Release
-
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
-
+        run: 'dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp'
       - name: dotnet install ef
         run: dotnet tool install -g dotnet-ef --version 7.0.14
-
-       -name: dotnet bundle migration
-        run: dotnet ef migrations bundle --runtime linux-x64 -p DotNetCoreSqlDb/DotNetCoreSqlDb.csproj -o ${{env.DOTNET_ROOT}}/myapp/migrate
-      
+      - name: dotnet bundle migration
+        run: >-
+          dotnet ef migrations bundle --runtime linux-x64 -p
+          DotNetCoreSqlDb/DotNetCoreSqlDb.csproj -o
+          ${{env.DOTNET_ROOT}}/myapp/migrate
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
-
+          path: '${{env.DOTNET_ROOT}}/myapp'
   deploy:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      name: Production
+      url: '${{ steps.deploy-to-webapp.outputs.webapp-url }}'
     permissions:
-      id-token: write #This is required for requesting the JWT
-
+      id-token: write
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
           name: .net-app
-      
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0DF447C980E44719A5A189015B792C1B }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5F66637CA8B0488381DAD76986577549 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F0D69A2D271F48D9AE81A50B76F1C3F9 }}
-
+          client-id: >-
+            ${{
+            secrets.AZUREAPPSERVICE_CLIENTID_0DF447C980E44719A5A189015B792C1B }}
+          tenant-id: >-
+            ${{
+            secrets.AZUREAPPSERVICE_TENANTID_5F66637CA8B0488381DAD76986577549 }}
+          subscription-id: >-
+            ${{
+            secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F0D69A2D271F48D9AE81A50B76F1C3F9
+            }}
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'testcfwebapp'
-          slot-name: 'Production'
+          app-name: testcfwebapp
+          slot-name: Production
           package: .
-          
